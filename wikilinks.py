@@ -47,7 +47,7 @@ class WikilinkMatch():
 	@property
 	def end( self ) -> int: return self.position[ 1 ]
 
-def replace_all_wikilinks( markdown: str, page: Page, files: Files, config: 'RelativeWikilinksConfig' ):
+def replace_all_wikilinks( markdown: str, page: Page, files: Files, config: 'RelativeWikilinksConfig' ) -> str:
 	global WIKILINK_PATTERN
 
 	while True:
