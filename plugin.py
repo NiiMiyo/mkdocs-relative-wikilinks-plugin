@@ -13,6 +13,7 @@ class RelativeWikilinksConfig( Config ):
 	absolute_attrs = c.Optional( c.Type( str ) )
 	found_attrs = c.Optional( c.Type( str ) )
 	not_found_attrs = c.Optional( c.Type( str ) )
+	aliases = c.DictOfItems( c.File( True ), default = {} )
 
 class RelativeWikilinks( BasePlugin[RelativeWikilinksConfig] ):
 	def on_page_markdown(self, markdown: str, /, *, page: Page, config: MkDocsConfig, files: Files) -> str | None:

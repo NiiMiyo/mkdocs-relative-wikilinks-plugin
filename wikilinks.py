@@ -70,7 +70,11 @@ def wikilink_replacement( match: WikilinkMatch, origin: File, files: Files, conf
 	filepath, fragment = sep_fragment( match.filepath )
 	label = match.label or fragment or splitext( split( filepath )[ 1 ] )[ 0 ]
 
-	destination = get_destination_file( filepath, origin, files )
+	destination = None
+	if alias := config.aliases.get( filepath, None ):
+		destination = next( ( f for f in files if f.abs_src_path == alias ), None )
+	else:
+		destination = get_destination_file( filepath, origin, files )
 
 	if destination is None:
 		# destination file was not found: generating random link
