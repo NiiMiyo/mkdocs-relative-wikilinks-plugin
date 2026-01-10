@@ -4,13 +4,17 @@ import unicodedata
 
 from dataclasses import dataclass
 from os.path import splitext, split, relpath
+from typing import TYPE_CHECKING
 from urllib.parse import quote, urlparse
 
 from mkdocs.structure.files import File, Files
 from mkdocs.structure.pages import Page
 
+if TYPE_CHECKING:
+	from .plugin import RelativeWikilinksConfig
 
-log = logging.getLogger( f"mkdocs.plugins.{__name__}" )
+
+_log = logging.getLogger( f"mkdocs.plugins.{__name__}" )
 WIKILINK_PATTERN = regex.compile( r"\[\[([^\]|]+)(?:\|([^\]]*))?\]\]" )
 
 
@@ -43,7 +47,7 @@ class WikilinkMatch():
 	@property
 	def end( self ) -> int: return self.position[ 1 ]
 
-def replace_all_wikilinks( markdown: str, page: Page, files: Files ):
+def replace_all_wikilinks( markdown: str, page: Page, files: Files, config: 'RelativeWikilinksConfig' ):
 	global WIKILINK_PATTERN
 
 	while True:
@@ -54,12 +58,12 @@ def replace_all_wikilinks( markdown: str, page: Page, files: Files ):
 
 		wiki_match = WikilinkMatch.from_match( match )
 
-		replacement = wikilink_replacement( wiki_match, page.file, files )
+		replacement = wikilink_replacement( wiki_match, page.file, files, config )
 		markdown = markdown[:wiki_match.start] + replacement + markdown[wiki_match.end:]
 	return markdown
 
 
-def wikilink_replacement( match: WikilinkMatch, origin: File, files: Files ) -> str:
+def wikilink_replacement( match: WikilinkMatch, origin: File, files: Files, config: 'RelativeWikilinksConfig' ) -> str:
 	if is_absolute_url( match.filepath ):
 		return f"[{ match.label or match.filepath }]({ match.filepath })"
 
@@ -68,13 +72,13 @@ def wikilink_replacement( match: WikilinkMatch, origin: File, files: Files ) -> 
 
 	destination = get_destination_file( filepath, origin, files )
 
-	log.debug( f"{filepath}#{fragment}" )
-
 	if destination is None:
+		link_class = config.not_found_attrs
 		# destination file was not found: generating random link
-		return f"[{ label }]({ match.filepath })"
+		resolved_link = f"[{ label }]({ match.filepath })"
 
 	else:
+		link_class = config.found_attrs
 		href = quote(
 			relpath(
 				destination.src_uri,
@@ -82,7 +86,16 @@ def wikilink_replacement( match: WikilinkMatch, origin: File, files: Files ) -> 
 			).replace('\\', '/')
 		) + parse_fragment( fragment )
 
-		return f"[{ label }]({ href })"
+		resolved_link = f"[{ label }]({ href })"
+
+	attrs = [ x for x in ( config.attrs, link_class, ) if x is not None and len( x ) > 0 ]
+	attr_list = (
+		f"{{: { ' '.join( attrs ) } }}"
+		if len( attrs ) > 0
+		else ""
+	)
+
+	return resolved_link + attr_list
 
 
 def get_destination_file( filepath: str, origin: File, files: Files ) -> File | None:
