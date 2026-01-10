@@ -4,7 +4,7 @@ import unicodedata
 
 from dataclasses import dataclass
 from os.path import splitext, split, relpath
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 
 from mkdocs.structure.files import File, Files
 from mkdocs.structure.pages import Page
@@ -60,6 +60,9 @@ def replace_all_wikilinks( markdown: str, page: Page, files: Files ):
 
 
 def wikilink_replacement( match: WikilinkMatch, origin: File, files: Files ) -> str:
+	if is_absolute_url( match.filepath ):
+		return f"[{ match.label or match.filepath }]({ match.filepath })"
+
 	filepath, fragment = sep_fragment( match.filepath )
 	label = match.label or fragment or splitext( split( filepath )[ 1 ] )[ 0 ]
 
@@ -126,3 +129,7 @@ def parse_fragment(fragment: str | None) -> str:
 		parsed = "#" + parsed
 
 	return parsed
+
+
+def is_absolute_url( url: str ) -> bool:
+	return bool( urlparse( url ).netloc )
