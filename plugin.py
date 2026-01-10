@@ -9,7 +9,8 @@ from wikilinks import replace_all_wikilinks
 
 
 class RelativeWikilinksConfig( Config ):
-	attrs = c.Optional( c.Type( str ) )
+	relative_attrs = c.Optional( c.Type( str ) )
+	absolute_attrs = c.Optional( c.Type( str ) )
 	found_attrs = c.Optional( c.Type( str ) )
 	not_found_attrs = c.Optional( c.Type( str ) )
 

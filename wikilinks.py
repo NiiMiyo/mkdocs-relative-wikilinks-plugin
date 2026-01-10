@@ -65,7 +65,7 @@ def replace_all_wikilinks( markdown: str, page: Page, files: Files, config: 'Rel
 
 def wikilink_replacement( match: WikilinkMatch, origin: File, files: Files, config: 'RelativeWikilinksConfig' ) -> str:
 	if is_absolute_url( match.filepath ):
-		return f"[{ match.label or match.filepath }]({ match.filepath })"
+		return make_md_link( match.filepath, match.label or match.filepath, config.absolute_attrs )
 
 	filepath, fragment = sep_fragment( match.filepath )
 	label = match.label or fragment or splitext( split( filepath )[ 1 ] )[ 0 ]
@@ -73,12 +73,12 @@ def wikilink_replacement( match: WikilinkMatch, origin: File, files: Files, conf
 	destination = get_destination_file( filepath, origin, files )
 
 	if destination is None:
-		link_class = config.not_found_attrs
 		# destination file was not found: generating random link
-		resolved_link = f"[{ label }]({ match.filepath })"
+		link_attrs = config.not_found_attrs
+		href = match.filepath
 
 	else:
-		link_class = config.found_attrs
+		link_attrs = config.found_attrs
 		href = quote(
 			relpath(
 				destination.src_uri,
@@ -86,16 +86,7 @@ def wikilink_replacement( match: WikilinkMatch, origin: File, files: Files, conf
 			).replace('\\', '/')
 		) + parse_fragment( fragment )
 
-		resolved_link = f"[{ label }]({ href })"
-
-	attrs = [ x for x in ( config.attrs, link_class, ) if x is not None and len( x ) > 0 ]
-	attr_list = (
-		f"{{: { ' '.join( attrs ) } }}"
-		if len( attrs ) > 0
-		else ""
-	)
-
-	return resolved_link + attr_list
+	return make_md_link( href, label, config.relative_attrs, link_attrs )
 
 
 def get_destination_file( filepath: str, origin: File, files: Files ) -> File | None:
@@ -146,3 +137,14 @@ def parse_fragment(fragment: str | None) -> str:
 
 def is_absolute_url( url: str ) -> bool:
 	return bool( urlparse( url ).netloc )
+
+
+def make_md_link( url: str, label: str, *attrs: str | None ) -> str:
+	parsed_attrs = [ x for x in attrs if x is not None and len( x ) > 0 ]
+	attr_list = (
+		f"{{: { ' '.join( parsed_attrs ) } }}"
+		if len( parsed_attrs ) > 0
+		else ""
+	)
+
+	return f"[{ label }]({ url }){ attr_list }";
