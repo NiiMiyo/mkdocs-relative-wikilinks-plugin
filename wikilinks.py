@@ -70,11 +70,8 @@ def wikilink_replacement( match: WikilinkMatch, origin: File, files: Files, conf
 	filepath, fragment = sep_fragment( match.filepath )
 	label = match.label or fragment or splitext( split( filepath )[ 1 ] )[ 0 ]
 
-	destination = None
-	if alias := config.aliases.get( filepath, None ):
-		destination = next( ( f for f in files if f.abs_src_path == alias ), None )
-	else:
-		destination = get_destination_file( filepath, origin, files )
+	destination = get_destination_from_alias( filepath, files, config ) \
+		or get_destination_from_filepath( filepath, origin, files )
 
 	if destination is None:
 		# destination file was not found: generating random link
@@ -93,7 +90,7 @@ def wikilink_replacement( match: WikilinkMatch, origin: File, files: Files, conf
 	return make_md_link( href, label, config.relative_attrs, link_attrs )
 
 
-def get_destination_file( filepath: str, origin: File, files: Files ) -> File | None:
+def get_destination_from_filepath( filepath: str, origin: File, files: Files ) -> File | None:
 	filepath, _ = sep_fragment( filepath )
 	if filepath == "":
 		return origin
@@ -109,6 +106,11 @@ def get_destination_file( filepath: str, origin: File, files: Files ) -> File | 
 		_, f_name_upper = split( f_path_upper )
 		if f_name_upper == file_name_upper and f_path_upper.endswith( file_path_upper ):
 			return f
+
+
+def get_destination_from_alias( filepath: str, files: Files, config: 'RelativeWikilinksConfig' ) -> File | None:
+	if alias_file_path := config.aliases.get( filepath, None ):
+		return next( ( f for f in files if f.abs_src_path == alias_file_path ), None )
 
 
 def sep_fragment( filename: str ) -> tuple[ str, str | None ]:
