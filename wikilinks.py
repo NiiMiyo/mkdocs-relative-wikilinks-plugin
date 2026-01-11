@@ -102,10 +102,12 @@ def get_destination_file( filepath: str, origin: File, files: Files ) -> File | 
 	if file_ext == "":
 		file_ext = ".md"
 
-	file_upper = ( file_name + file_ext ).upper()
+	file_path_upper = ( file_name + file_ext ).upper()
+	_, file_name_upper = split( file_path_upper )
 	for f in files:
-		f_upper = f.src_uri.upper()
-		if f_upper.endswith(file_upper):
+		f_path_upper = f.src_uri.upper()
+		_, f_name_upper = split( f_path_upper )
+		if f_name_upper == file_name_upper and f_path_upper.endswith( file_path_upper ):
 			return f
 
 
