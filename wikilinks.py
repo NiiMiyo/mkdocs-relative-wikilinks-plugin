@@ -99,13 +99,23 @@ def get_destination_from_filepath( filepath: str, origin: File, files: Files ) -
 	if file_ext == "":
 		file_ext = ".md"
 
-	file_path_upper = ( file_name + file_ext ).upper()
-	_, file_name_upper = split( file_path_upper )
+	file_path_upper = split_reverse_upper_path( ( file_name + file_ext ) )
+
 	for f in files:
-		f_path_upper = f.src_uri.upper()
-		_, f_name_upper = split( f_path_upper )
-		if f_name_upper == file_name_upper and f_path_upper.endswith( file_path_upper ):
-			return f
+		f_path_upper = split_reverse_upper_path( f.src_uri )
+
+		if (
+			len( file_path_upper ) <= len( f_path_upper )
+			and all( l == t for l, t in zip( file_path_upper, f_path_upper ) )
+		): return f
+
+
+def split_reverse_upper_path( path: str ):
+	return [
+		p
+		for p in path.upper().replace( "\\", "/" ).split( "/" )
+		if len( p )
+	][::-1]
 
 
 def get_destination_from_alias( filepath: str, files: Files, config: 'RelativeWikilinksConfig' ) -> File | None:
