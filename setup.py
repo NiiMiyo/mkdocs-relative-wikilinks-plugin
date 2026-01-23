@@ -7,6 +7,8 @@ setup(
 		"plugin",
 		"wikilinks",
 		"aliases",
+		"wikilink_match",
+		"wikilink_files",
 	],
 
 	install_requires=[
