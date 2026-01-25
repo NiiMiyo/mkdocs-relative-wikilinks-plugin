@@ -35,7 +35,7 @@ def wikilink_replacement( match: WikilinkMatch, origin: File, files: Files, conf
 	destination = get_destination( filepath, origin, files, config )
 
 	if destination is None:
-		# destination file was not found: generating random link
+		_log.warning( f"Doc file '{ origin.src_uri }' contains a link '[[{ filepath }]]' that could not be found." )
 		link_attrs = config.not_found_attrs
 		href = match.filepath
 
